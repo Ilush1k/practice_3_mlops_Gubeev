@@ -1,0 +1,208 @@
+{
+  "environment": {
+    "Python": "3.12.10",
+    "dvc": "3.59.2",
+    "clearml": "1.18.0",
+    "scikit-learn": "1.6.1",
+    "pandas": "2.2.3",
+    "poetry": "2.1.1"
+  },
+  "checks": [
+    "все три режима повторяют одинаковые байты и сохраняют соседний файл",
+    "валидатор отклоняет: неверная площадь",
+    "валидатор отклоняет: изменённый target",
+    "валидатор отклоняет: потерянная строка",
+    "валидатор отклоняет: неверный порядок столбцов",
+    "валидатор отклоняет: индекс pandas",
+    "валидатор отклоняет: пропущенное значение",
+    "валидатор отклоняет отсутствующий файл",
+    "git switch без checkout оставлял Wine предыдущей ветки в workspace"
+  ],
+  "versions": {
+    "base": {
+      "commit": "1e91d10efc3bb56147037f5cefd37575916902c3",
+      "ref": "data-v1",
+      "directory_md5": "68694d6e2fc4bf7a7da11d2b0d489e1e.dir",
+      "metadata_sha256": "3aa2128aa15e4da33d4f63faa9c38edb24d1b02d1cab7cb8eb3d1c5d10bc596b",
+      "tables": [
+        {
+          "path": "data/iris.csv",
+          "sha256": "acb1d0e09be856a27d25798722572591b3ec55df2382354c5f83919f4b61e96b",
+          "rows": 150,
+          "column_count": 5,
+          "columns": [
+            "sepal length (cm)",
+            "sepal width (cm)",
+            "petal length (cm)",
+            "petal width (cm)",
+            "target"
+          ],
+          "missing_values": 0
+        }
+      ]
+    },
+    "wine": {
+      "commit": "7e806b22116f06bbdaf7e14545780829571cacec",
+      "ref": "feature/wine",
+      "directory_md5": "cd692bf1d9bad578ff6e9bdaf5fff033.dir",
+      "metadata_sha256": "1363389a0a3865e646f3d2b8cb1e71bd518af1f5fa21971272b77365e25e57df",
+      "tables": [
+        {
+          "path": "data/iris.csv",
+          "sha256": "acb1d0e09be856a27d25798722572591b3ec55df2382354c5f83919f4b61e96b",
+          "rows": 150,
+          "column_count": 5,
+          "columns": [
+            "sepal length (cm)",
+            "sepal width (cm)",
+            "petal length (cm)",
+            "petal width (cm)",
+            "target"
+          ],
+          "missing_values": 0
+        },
+        {
+          "path": "data/wine.csv",
+          "sha256": "b72adfd45219c12d4af882f76b4c67df0a44922d0bac0f2fd30e4b8d0c97a301",
+          "rows": 178,
+          "column_count": 14,
+          "columns": [
+            "alcohol",
+            "malic_acid",
+            "ash",
+            "alcalinity_of_ash",
+            "magnesium",
+            "total_phenols",
+            "flavanoids",
+            "nonflavanoid_phenols",
+            "proanthocyanins",
+            "color_intensity",
+            "hue",
+            "od280/od315_of_diluted_wines",
+            "proline",
+            "target"
+          ],
+          "missing_values": 0
+        }
+      ]
+    },
+    "iris_features": {
+      "commit": "cbe9f4edbfd0061dacee5b3b8bbfe2f4cf8df091",
+      "ref": "feature/iris-features before merge (data-merged^1)",
+      "directory_md5": "84fad98472f78577bceb6d442c1f794d.dir",
+      "metadata_sha256": "c2574a6022983aaaeedd6a3722cfd498fb901e2434a1af930b258f883c266697",
+      "tables": [
+        {
+          "path": "data/iris.csv",
+          "sha256": "8228a6345ef84c613f21e4dca934ad87fc9d8629db248f215bdaf40bdb83c669",
+          "rows": 150,
+          "column_count": 7,
+          "columns": [
+            "sepal length (cm)",
+            "sepal width (cm)",
+            "petal length (cm)",
+            "petal width (cm)",
+            "target",
+            "sepal_area",
+            "petal_area"
+          ],
+          "missing_values": 0
+        }
+      ]
+    },
+    "merged": {
+      "commit": "c6a18cf11c2dc94f3e5939b23d6d5381873ce5e1",
+      "ref": "main; data-merged",
+      "directory_md5": "d23e2a33f1aa86af524072021da153ed.dir",
+      "metadata_sha256": "53ae84294d6d0310b6dedf66e175c94afae61db8a05f6e7b226f0d591a289cb8",
+      "tables": [
+        {
+          "path": "data/iris.csv",
+          "sha256": "8228a6345ef84c613f21e4dca934ad87fc9d8629db248f215bdaf40bdb83c669",
+          "rows": 150,
+          "column_count": 7,
+          "columns": [
+            "sepal length (cm)",
+            "sepal width (cm)",
+            "petal length (cm)",
+            "petal width (cm)",
+            "target",
+            "sepal_area",
+            "petal_area"
+          ],
+          "missing_values": 0
+        },
+        {
+          "path": "data/wine.csv",
+          "sha256": "b72adfd45219c12d4af882f76b4c67df0a44922d0bac0f2fd30e4b8d0c97a301",
+          "rows": 178,
+          "column_count": 14,
+          "columns": [
+            "alcohol",
+            "malic_acid",
+            "ash",
+            "alcalinity_of_ash",
+            "magnesium",
+            "total_phenols",
+            "flavanoids",
+            "nonflavanoid_phenols",
+            "proanthocyanins",
+            "color_intensity",
+            "hue",
+            "od280/od315_of_diluted_wines",
+            "proline",
+            "target"
+          ],
+          "missing_values": 0
+        }
+      ]
+    }
+  },
+  "merge_observation": "DVC merge driver автоматически объединил оба состояния при git merge. Конфликта не возникло; после checkout итоговые SHA-256 Iris и Wine совпали с соответствующими ветками.",
+  "merge_output": "Auto-merging data.dvc; Merge made by the ort strategy.",
+  "merge_parents": "cbe9f4edbfd0061dacee5b3b8bbfe2f4cf8df091 7e806b22116f06bbdaf7e14545780829571cacec",
+  "remote": "C:/Users/Илья/.vscode/CODE/MLOPS/practice_3/dvc_remote_Gubeev",
+  "clone": "C:/Users/Илья/.vscode/CODE/MLOPS/practice_3/mlops-data-Gubeev-clean-clone",
+  "clone_tables": [
+    {
+      "path": "data/iris.csv",
+      "sha256": "8228a6345ef84c613f21e4dca934ad87fc9d8629db248f215bdaf40bdb83c669",
+      "rows": 150,
+      "column_count": 7,
+      "columns": [
+        "sepal length (cm)",
+        "sepal width (cm)",
+        "petal length (cm)",
+        "petal width (cm)",
+        "target",
+        "sepal_area",
+        "petal_area"
+      ],
+      "missing_values": 0
+    },
+    {
+      "path": "data/wine.csv",
+      "sha256": "b72adfd45219c12d4af882f76b4c67df0a44922d0bac0f2fd30e4b8d0c97a301",
+      "rows": 178,
+      "column_count": 14,
+      "columns": [
+        "alcohol",
+        "malic_acid",
+        "ash",
+        "alcalinity_of_ash",
+        "magnesium",
+        "total_phenols",
+        "flavanoids",
+        "nonflavanoid_phenols",
+        "proanthocyanins",
+        "color_intensity",
+        "hue",
+        "od280/od315_of_diluted_wines",
+        "proline",
+        "target"
+      ],
+      "missing_values": 0
+    }
+  ],
+  "status": {}
+}

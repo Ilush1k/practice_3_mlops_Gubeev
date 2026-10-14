@@ -95,8 +95,14 @@ def build_report(root: Path) -> None:
                   "## Источники",
                   "- [DVC merge driver](https://dvc.org/doc/user-guide/how-to/resolve-merge-conflicts)",
                   "- [ClearML Dataset SDK](https://clear.ml/docs/latest/docs/references/sdk/dataset/)",
-                  "Исходное задание: data_versioning_practice.md; справочник: explained.md. Демонстрационный notebook выполнялся отдельно и не использован вместо самостоятельного решения."])
-    (root / "REPORT.md").write_text("\n\n".join(lines) + "\n", encoding="utf-8")
+                  "Исходное задание: data_versioning_practice.md; справочник: explained.md. Демонстрационный notebook выполнялся отдельно и не использован вместо самостоятельного решения. Выполненная копия dvc_clearml_sklearn_demo.executed.ipynb адаптирует URL локального remote на относительный путь для кириллицы в Windows; исходный файл сохранён без изменений. Локальные ячейки демонстрации и practice_3_solution.ipynb выполнены без ошибок. ClearML-ячейки демонстрации пропущены (run_clearml=False)."])
+    paragraphs = []
+    for line in lines:
+        if paragraphs and line.startswith("|") and paragraphs[-1].splitlines()[-1].startswith("|"):
+            paragraphs[-1] += "\n" + line
+        else:
+            paragraphs.append(line)
+    (root / "REPORT.md").write_text("\n\n".join(paragraphs) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
