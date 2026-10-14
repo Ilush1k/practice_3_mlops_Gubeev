@@ -1,0 +1,13 @@
+/data/
+/.venv/
+/clearml_downloads/
+/clearml_sources/
+/clearml_ids.local.json
+/clearml.conf
+/.ipynb_checkpoints/
+__pycache__/
+*.pyc
+*.csv
+*.log
+.env
+/data
