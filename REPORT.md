@@ -47,7 +47,7 @@ python verify_clearml.py --fresh-cache --update-report
 
 Прямые зависимости зафиксированы в `pyproject.toml`, транзитивные — в `poetry.lock`. Python ограничен веткой 3.12.
 
-Локальный Git-репозиторий: [mlops-data-Gubeev](C:/Users/Илья/.vscode/CODE/MLOPS/practice_3/mlops-data-Gubeev). Основная ветка — `main`. Публичный URL пока отсутствует; после загрузки репозитория в Git-хостинг его следует добавить в этот раздел.
+GitHub-репозиторий: [practice_3_mlops_Gubeev](https://github.com/Ilush1k/practice_3_mlops_Gubeev). Основная ветка — `main`. Локальная папка проекта — `mlops-data-Gubeev`.
 
 ## Подготовка и проверка таблиц
 
@@ -61,10 +61,10 @@ python verify_clearml.py --fresh-cache --update-report
 
 | Состояние | Git commit | Tag/ветка при создании | DVC directory MD5 | SHA-256 data.dvc |
 |---|---|---|---|---|
-| base | `1e91d10efc3bb56147037f5cefd37575916902c3` | `data-v1` | `68694d6e2fc4bf7a7da11d2b0d489e1e.dir` | `3aa2128aa15e4da33d4f63faa9c38edb24d1b02d1cab7cb8eb3d1c5d10bc596b` |
-| wine | `7e806b22116f06bbdaf7e14545780829571cacec` | `feature/wine` | `cd692bf1d9bad578ff6e9bdaf5fff033.dir` | `1363389a0a3865e646f3d2b8cb1e71bd518af1f5fa21971272b77365e25e57df` |
-| iris_features | `cbe9f4edbfd0061dacee5b3b8bbfe2f4cf8df091` | `feature/iris-features before merge (data-merged^1)` | `84fad98472f78577bceb6d442c1f794d.dir` | `c2574a6022983aaaeedd6a3722cfd498fb901e2434a1af930b258f883c266697` |
-| merged | `c6a18cf11c2dc94f3e5939b23d6d5381873ce5e1` | `main; data-merged` | `d23e2a33f1aa86af524072021da153ed.dir` | `53ae84294d6d0310b6dedf66e175c94afae61db8a05f6e7b226f0d591a289cb8` |
+| base | `0e9ffa0705a1b5a6740d912a86c2519d08b594be` | `data-v1` | `68694d6e2fc4bf7a7da11d2b0d489e1e.dir` | `3aa2128aa15e4da33d4f63faa9c38edb24d1b02d1cab7cb8eb3d1c5d10bc596b` |
+| wine | `d584f8acf48d56ef9845fffad13147e9df6aa8e8` | `feature/wine` | `cd692bf1d9bad578ff6e9bdaf5fff033.dir` | `1363389a0a3865e646f3d2b8cb1e71bd518af1f5fa21971272b77365e25e57df` |
+| iris_features | `f57a83d753ab5ff8b28ab5153ca55de5ae49411c` | `feature/iris-features before merge (data-merged^1)` | `84fad98472f78577bceb6d442c1f794d.dir` | `c2574a6022983aaaeedd6a3722cfd498fb901e2434a1af930b258f883c266697` |
+| merged | `0cb89b326214bebf41ba547d8e8c9b5c2ca1a9a1` | `main; data-merged` | `d23e2a33f1aa86af524072021da153ed.dir` | `53ae84294d6d0310b6dedf66e175c94afae61db8a05f6e7b226f0d591a289cb8` |
 
 ### base
 
@@ -112,7 +112,7 @@ python verify_clearml.py --fresh-cache --update-report
 
 DVC merge driver автоматически объединил оба состояния при git merge. Конфликта не возникло; после checkout итоговые SHA-256 Iris и Wine совпали с соответствующими ветками.
 
-Родители merge-коммита: `cbe9f4edbfd0061dacee5b3b8bbfe2f4cf8df091 7e806b22116f06bbdaf7e14545780829571cacec`. История обеих ветвей сохранена. main получила проверенный merge через fast-forward. Маркеры конфликта в data.dvc отсутствуют.
+Родители merge-коммита: `f57a83d753ab5ff8b28ab5153ca55de5ae49411c d584f8acf48d56ef9845fffad13147e9df6aa8e8`. История обеих ветвей сохранена. main получила проверенный merge через fast-forward. Маркеры конфликта в data.dvc отсутствуют.
 
 Remote `storage`: `C:/Users/Илья/.vscode/CODE/MLOPS/practice_3/dvc_remote_Gubeev`. Это соседняя директория вне репозитория. Безопасная конфигурация сохранена в `.dvc/config`. Все версии отправлены через dvc push; повторный push --all-commits не обнаружил недостающих объектов.
 
