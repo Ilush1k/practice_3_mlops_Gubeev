@@ -1,13 +1,18 @@
-/data/
-/.venv/
-/clearml_downloads/
-/clearml_sources/
-/clearml_ids.local.json
-/clearml.conf
-/.ipynb_checkpoints/
+# Python и локальное окружение
 __pycache__/
-*.pyc
+*.py[cod]
+.venv/
+venv/
+
+# Данные и временные копии
+/data/
+/.dvc/cache/
+/.dvc/tmp/
+/clearml_downloads/
+/clearml_verified/
 *.csv
-*.log
+
+# Локальные настройки и credentials
+/clearml.conf
 .env
-/data
+*.log

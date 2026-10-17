@@ -1,146 +1,139 @@
-"""Создать три версии на настроенном ClearML server и проверить скачивание по ID."""
+"""Базовая версия ClearML Dataset и общие настройки трёх версий практики."""
 from __future__ import annotations
 
 import argparse
-import json
 import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from check_data import check_data
 from prepare_data import prepare
 
+ROOT = Path(__file__).resolve().parent
 PROJECT = "MIIT/MLOps/practice_3/Gubeev"
 NAME = "sklearn-tabular-Gubeev"
-SPECS = [("BASE_ID", "1.0.0", "base"), ("WINE_ID", "1.1.0", "wine"),
-         ("IRIS_FEATURES_ID", "2.0.0", "iris_features")]
+BASE_ID = "77ab3b41f30a48a7b4da01a60e705aba"
+WINE_ID = "fd4384d1b03242269ec15a584a543499"
+IRIS_FEATURES_ID = "23306db43cc441fd8eb27f66502bf1a1"
+API_HOST = "https://api.clear.ml"
+WORK_DIR = ROOT / ".dvc" / "tmp" / "clearml"
+
+SPECS = {
+    "base": {"key": "BASE_ID", "id": BASE_ID, "version": "1.0.0",
+             "files": ["iris.csv"], "added": ["iris.csv"], "modified": [],
+             "description": "Исходный Iris scikit-learn, без Wine и вычисляемых признаков"},
+    "wine": {"key": "WINE_ID", "id": WINE_ID, "version": "1.1.0",
+             "files": ["iris.csv", "wine.csv"], "added": ["wine.csv"], "modified": [],
+             "description": "К исходному Iris от базы добавлен только Wine"},
+    "iris_features": {"key": "IRIS_FEATURES_ID", "id": IRIS_FEATURES_ID, "version": "2.0.0",
+                      "files": ["iris.csv"], "added": [], "modified": ["iris.csv"],
+                      "description": "Отдельная ветвь от базы: Iris с sepal_area и petal_area, без Wine"},
+}
+EXPECTED_SHA256 = {
+    "base": {"iris.csv": "acb1d0e09be856a27d25798722572591b3ec55df2382354c5f83919f4b61e96b"},
+    "wine": {"iris.csv": "acb1d0e09be856a27d25798722572591b3ec55df2382354c5f83919f4b61e96b",
+             "wine.csv": "b72adfd45219c12d4af882f76b4c67df0a44922d0bac0f2fd30e4b8d0c97a301"},
+    "iris_features": {"iris.csv": "8228a6345ef84c613f21e4dca934ad87fc9d8629db248f215bdaf40bdb83c669"},
+}
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--execute", action="store_true", help="Создать реальные Dataset на сервере")
-    parser.add_argument("--inspect-only", action="store_true", help="Повторно скачать уже сохранённые ID")
-    parser.add_argument("--fresh-cache", action="store_true", help="Скачать с новым пустым SDK cache")
-    parser.add_argument("--expected-api-host", help="Адрес API, который должен совпасть с настройкой SDK")
-    args = parser.parse_args()
-    if not args.execute:
-        print(f"Проект: {PROJECT}\nDataset: {NAME}\nВерсии: 1.0.0 → 1.1.0 и 1.0.0 → 2.0.0")
-        print("Настройте clearml-init вне Git. Затем: python clearml_versions.py --execute --expected-api-host <API URL>")
-        return
-    if not args.expected_api_host:
-        parser.error("Укажите --expected-api-host для проверки подключения к нужному серверу")
-
-    root = Path(__file__).resolve().parent
+def setup_sdk(expected_api_host: str = API_HOST, *, fresh_cache: bool = False) -> None:
+    """Credentials читаются из пользовательского clearml.conf вне репозитория."""
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    work_root = root / ".dvc" / "tmp" / "clearml"
-    cache_dir = work_root / "cache" / (run_id if args.fresh_cache else "default")
-    if args.fresh_cache:
-        if cache_dir.exists():
+    cache = WORK_DIR / "cache" / (run_id if fresh_cache else "default")
+    if fresh_cache:
+        if cache.exists():
             raise RuntimeError("Новый cache уже существует")
-        os.environ["CLEARML_CACHE_DIR"] = str(cache_dir)
+        os.environ["CLEARML_CACHE_DIR"] = str(cache)
     else:
-        os.environ.setdefault("CLEARML_CACHE_DIR", str(cache_dir))
-
-    from clearml import Dataset, Task
+        os.environ.setdefault("CLEARML_CACHE_DIR", str(cache))
     from clearml.backend_api.session import Session
     from clearml.config import get_cache_dir
 
-    # SDK использует pathlib2.Path; сравниваем пути, а не объекты разных библиотек.
-    if args.fresh_cache and os.path.normcase(os.path.abspath(str(get_cache_dir()))) != os.path.normcase(str(cache_dir.resolve())):
-        raise RuntimeError("SDK использует другой cache вместо нового пустого каталога")
+    # ClearML 1.18 использует pathlib2: сравниваем нормализованные строки путей.
+    if fresh_cache and os.path.normcase(os.path.abspath(str(get_cache_dir()))) != os.path.normcase(str(cache.resolve())):
+        raise RuntimeError("SDK не использует новый пустой cache")
+    if Session.get_api_server_host().rstrip("/") != expected_api_host.rstrip("/"):
+        raise RuntimeError("Адрес API в настройке SDK не совпадает с ожидаемым")
 
-    session = Session()
-    actual_host = session.get_api_server_host().rstrip("/")
-    if actual_host != args.expected_api_host.rstrip("/"):
-        raise RuntimeError("Адрес API в настройке SDK не совпадает с --expected-api-host")
-    ids_path = root / "clearml_ids.local.json"
-    evidence_path = root / "evidence" / "clearml.json"
-    if ids_path.exists():
-        ids = json.loads(ids_path.read_text(encoding="utf-8"))
-    elif evidence_path.exists():
-        ids = json.loads(evidence_path.read_text(encoding="utf-8")).get("ids", {})
+
+def get_dataset(mode: str):
+    from clearml import Dataset
+    return Dataset.get(dataset_id=SPECS[mode]["id"], only_completed=True)
+
+
+def inspect_dataset(dataset, mode: str) -> dict:
+    """Проверить серверный состав, финализацию и ветвление по точным IDs."""
+    from clearml import Task
+
+    spec = SPECS[mode]
+    parents = [] if mode == "base" else [BASE_ID]
+    graph = dataset.get_dependency_graph()
+    if dataset.version != spec["version"] or dataset.name != NAME:
+        raise ValueError(f"{mode}: неверное имя или номер версии")
+    if graph.get(dataset.id) != parents:
+        raise ValueError(f"{mode}: неверные родители: {graph}")
+    if mode == "iris_features" and WINE_ID in graph:
+        raise ValueError("WINE_ID обнаружен среди предков Iris features")
+    files = sorted(dataset.list_files())
+    changes = {"added": sorted(dataset.list_added_files()),
+               "modified": sorted(dataset.list_modified_files()),
+               "removed": sorted(dataset.list_removed_files())}
+    if files != spec["files"] or changes != {"added": spec["added"], "modified": spec["modified"], "removed": []}:
+        raise ValueError(f"{mode}: неверный состав или изменения: {files}, {changes}")
+    task = Task.get_task(task_id=dataset.id)
+    status = task.get_status()
+    if not dataset.is_final() or status != "completed":
+        raise ValueError(f"{mode}: ожидался финализированный Dataset со статусом completed")
+    url = task.get_output_log_web_page().replace("/projects/", "/datasets/simple/", 1).removesuffix("/output/log")
+    return {"key": spec["key"], "id": dataset.id, "version": dataset.version,
+            "parents": parents, "graph": graph, "files": files,
+            "changes": changes, "status": status, "dataset_url": url}
+
+
+def create_version(mode: str, *, existing_id: str | None = None):
+    """Создать версию либо продолжить уже начатую, не меняя исходный workspace."""
+    from clearml import Dataset
+
+    spec = SPECS[mode]
+    parents = [] if mode == "base" else [BASE_ID]
+    if existing_id:
+        dataset = Dataset.get(dataset_id=existing_id)
     else:
-        ids = {}
-    evidence_path.parent.mkdir(exist_ok=True)
-    sources = work_root / "sources" / run_id
-    versions = []
-    for key, version, mode in SPECS:
-        parents = [] if key == "BASE_ID" else [ids["BASE_ID"]]
-        if key in ids:
-            dataset = Dataset.get(dataset_id=ids[key])
-        else:
-            if args.inspect_only:
-                raise RuntimeError(f"В {ids_path.name} отсутствует {key}")
-            dataset = Dataset.create(
-                dataset_project=PROJECT, dataset_name=NAME, dataset_version=version,
-                parent_datasets=parents or None,
-                dataset_tags=["practice_3", "Gubeev", "base" if key == "BASE_ID" else mode],
-                description={"base": "Исходный Iris scikit-learn, без Wine и вычисляемых признаков",
-                             "wine": "Наследование исходного Iris от базы; добавлен только Wine",
-                             "iris_features": "Отдельная ветвь от базы: Iris с sepal_area и petal_area, без Wine"}[mode],
-            )
-            ids[key] = dataset.id
-            ids_path.write_text(json.dumps(ids, indent=2), encoding="utf-8")
-        if dataset.version != version:
-            raise RuntimeError(f"Неверный номер версии сохранённого {key}")
-        graph = dataset.get_dependency_graph()
-        if graph.get(dataset.id, []) != parents:
-            raise RuntimeError(f"Неверные родители {key}: {graph}")
-        if not dataset.is_final():
-            if args.inspect_only:
-                raise RuntimeError(f"{key} ещё не финализирован")
-            source = prepare(mode, sources / mode)
+        dataset = Dataset.create(
+            dataset_project=PROJECT, dataset_name=NAME, dataset_version=spec["version"],
+            parent_datasets=parents or None, description=spec["description"],
+            dataset_tags=["practice_3", "Gubeev", mode],
+        )
+        print(f"{spec['key']}: {dataset.id}", flush=True)
+    if dataset.name != NAME or dataset.version != spec["version"] or dataset.get_dependency_graph().get(dataset.id) != parents:
+        raise ValueError("Неверная версия или родители Dataset")
+    if not dataset.is_final():
+        WORK_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=WORK_DIR) as temporary:
+            source = prepare(mode, Path(temporary))
             dataset.add_files(path=str(source))
             dataset.upload()
             if not dataset.finalize():
-                raise RuntimeError(f"Не удалось финализировать {key}")
-        downloaded = Dataset.get(dataset_id=ids[key], only_completed=True)
-        task = Task.get_task(task_id=downloaded.id)
-        status = task.get_status()
-        if status != "completed":
-            raise RuntimeError(f"{version}: ожидался статус completed, получен {status}")
-        dataset_url = task.get_output_log_web_page().replace(
-            "/projects/", "/datasets/simple/", 1).removesuffix("/output/log")
-        target = work_root / "downloads" / run_id / version
-        downloaded.get_mutable_local_copy(target_folder=str(target), overwrite=False)
-        summary = check_data(target, mode)
-        expected = sources / f"expected_{mode}"
-        prepare("iris_features" if mode == "iris_features" else "base", expected)
-        if mode == "wine":
-            prepare("wine", expected)
-        expected_hashes = [item["sha256"] for item in check_data(expected, mode)]
-        if [item["sha256"] for item in summary] != expected_hashes:
-            raise RuntimeError(f"{version}: SHA-256 скачанных файлов отличается от генератора")
-        graph = downloaded.get_dependency_graph()
-        if graph.get(downloaded.id, []) != parents:
-            raise RuntimeError(f"{version}: неверный lineage после скачивания")
-        if mode == "iris_features" and ids["WINE_ID"] in graph:
-            raise RuntimeError("Версия Wine обнаружена среди предков Iris features")
-        changes = {"added": sorted(downloaded.list_added_files()),
-                   "modified": sorted(downloaded.list_modified_files()),
-                   "removed": sorted(downloaded.list_removed_files())}
-        expected_changes = {"added": ["iris.csv"] if mode == "base" else (["wine.csv"] if mode == "wine" else []),
-                            "modified": ["iris.csv"] if mode == "iris_features" else [], "removed": []}
-        if changes != expected_changes:
-            raise RuntimeError(f"{version}: неверные изменения файлов: {changes}")
-        if sorted(downloaded.list_files()) != sorted(Path(item["path"]).name for item in summary):
-            raise RuntimeError(f"{version}: список SDK отличается от скачанного состава")
-        versions.append({"key": key, "id": downloaded.id, "version": downloaded.version,
-                         "parents": parents, "graph": graph, "files": sorted(downloaded.list_files()),
-                         "changes": changes, "tables": summary, "finalized": downloaded.is_final(),
-                         "status": status, "dataset_url": dataset_url})
-        evidence_path.write_text(json.dumps({"project": PROJECT, "name": NAME, "ids": ids,
-                                             "verified_at_utc": datetime.now(timezone.utc).isoformat(),
-                                             "fresh_cache": args.fresh_cache,
-                                             "versions": versions}, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"Проверена версия {version}: {downloaded.id}")
-    # Повторная проверка базы после создания обеих дочерних версий.
-    if Dataset.get(dataset_id=ids["BASE_ID"]).list_files() != ["iris.csv"]:
-        raise RuntimeError("Состав базы изменился")
-    from build_report import build_report
-    build_report(root)
-    print("REPORT.md обновлён. Сохраните evidence/clearml.json и REPORT.md в Git.")
+                raise RuntimeError("Не удалось финализировать Dataset")
+    return dataset
+
+
+def run_creator(mode: str) -> None:
+    spec = SPECS[mode]
+    parser = argparse.ArgumentParser(description=f"ClearML {spec['version']}: {spec['description']}")
+    parser.add_argument("--execute", action="store_true", help="Получить и проверить уже созданную версию")
+    parser.add_argument("--expected-api-host", default=API_HOST)
+    args = parser.parse_args()
+    if not args.execute:
+        print(f"{PROJECT} / {NAME}\nVersion {spec['version']}; {spec['key']}={spec['id']}")
+        print("Версия уже создана. Для проверки укажите --execute; дубликаты не создаются.")
+        return
+    setup_sdk(args.expected_api_host)
+    dataset = create_version(mode, existing_id=spec["id"])
+    result = inspect_dataset(dataset, mode)
+    print(f"Version {result['version']}: {result['id']}; status={result['status']}; files={result['files']}")
 
 
 if __name__ == "__main__":
-    main()
+    run_creator("base")
