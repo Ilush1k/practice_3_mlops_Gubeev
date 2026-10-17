@@ -1,0 +1,162 @@
+{
+  "project": "MIIT/MLOps/practice_3/Gubeev",
+  "name": "sklearn-tabular-Gubeev",
+  "ids": {
+    "BASE_ID": "77ab3b41f30a48a7b4da01a60e705aba",
+    "WINE_ID": "fd4384d1b03242269ec15a584a543499",
+    "IRIS_FEATURES_ID": "23306db43cc441fd8eb27f66502bf1a1"
+  },
+  "verified_at_utc": "2026-10-17T09:38:58.637671+00:00",
+  "fresh_cache": true,
+  "versions": [
+    {
+      "key": "BASE_ID",
+      "id": "77ab3b41f30a48a7b4da01a60e705aba",
+      "version": "1.0.0",
+      "parents": [],
+      "graph": {
+        "77ab3b41f30a48a7b4da01a60e705aba": []
+      },
+      "files": [
+        "iris.csv"
+      ],
+      "changes": {
+        "added": [
+          "iris.csv"
+        ],
+        "modified": [],
+        "removed": []
+      },
+      "tables": [
+        {
+          "path": "1.0.0/iris.csv",
+          "sha256": "acb1d0e09be856a27d25798722572591b3ec55df2382354c5f83919f4b61e96b",
+          "rows": 150,
+          "column_count": 5,
+          "columns": [
+            "sepal length (cm)",
+            "sepal width (cm)",
+            "petal length (cm)",
+            "petal width (cm)",
+            "target"
+          ],
+          "missing_values": 0
+        }
+      ],
+      "finalized": true,
+      "status": "completed",
+      "dataset_url": "https://app.clear.ml/datasets/simple/afe5583bc96e401cbf4b48447e2a75f9/experiments/77ab3b41f30a48a7b4da01a60e705aba"
+    },
+    {
+      "key": "WINE_ID",
+      "id": "fd4384d1b03242269ec15a584a543499",
+      "version": "1.1.0",
+      "parents": [
+        "77ab3b41f30a48a7b4da01a60e705aba"
+      ],
+      "graph": {
+        "77ab3b41f30a48a7b4da01a60e705aba": [],
+        "fd4384d1b03242269ec15a584a543499": [
+          "77ab3b41f30a48a7b4da01a60e705aba"
+        ]
+      },
+      "files": [
+        "iris.csv",
+        "wine.csv"
+      ],
+      "changes": {
+        "added": [
+          "wine.csv"
+        ],
+        "modified": [],
+        "removed": []
+      },
+      "tables": [
+        {
+          "path": "1.1.0/iris.csv",
+          "sha256": "acb1d0e09be856a27d25798722572591b3ec55df2382354c5f83919f4b61e96b",
+          "rows": 150,
+          "column_count": 5,
+          "columns": [
+            "sepal length (cm)",
+            "sepal width (cm)",
+            "petal length (cm)",
+            "petal width (cm)",
+            "target"
+          ],
+          "missing_values": 0
+        },
+        {
+          "path": "1.1.0/wine.csv",
+          "sha256": "b72adfd45219c12d4af882f76b4c67df0a44922d0bac0f2fd30e4b8d0c97a301",
+          "rows": 178,
+          "column_count": 14,
+          "columns": [
+            "alcohol",
+            "malic_acid",
+            "ash",
+            "alcalinity_of_ash",
+            "magnesium",
+            "total_phenols",
+            "flavanoids",
+            "nonflavanoid_phenols",
+            "proanthocyanins",
+            "color_intensity",
+            "hue",
+            "od280/od315_of_diluted_wines",
+            "proline",
+            "target"
+          ],
+          "missing_values": 0
+        }
+      ],
+      "finalized": true,
+      "status": "completed",
+      "dataset_url": "https://app.clear.ml/datasets/simple/afe5583bc96e401cbf4b48447e2a75f9/experiments/fd4384d1b03242269ec15a584a543499"
+    },
+    {
+      "key": "IRIS_FEATURES_ID",
+      "id": "23306db43cc441fd8eb27f66502bf1a1",
+      "version": "2.0.0",
+      "parents": [
+        "77ab3b41f30a48a7b4da01a60e705aba"
+      ],
+      "graph": {
+        "23306db43cc441fd8eb27f66502bf1a1": [
+          "77ab3b41f30a48a7b4da01a60e705aba"
+        ]
+      },
+      "files": [
+        "iris.csv"
+      ],
+      "changes": {
+        "added": [],
+        "modified": [
+          "iris.csv"
+        ],
+        "removed": []
+      },
+      "tables": [
+        {
+          "path": "2.0.0/iris.csv",
+          "sha256": "8228a6345ef84c613f21e4dca934ad87fc9d8629db248f215bdaf40bdb83c669",
+          "rows": 150,
+          "column_count": 7,
+          "columns": [
+            "sepal length (cm)",
+            "sepal width (cm)",
+            "petal length (cm)",
+            "petal width (cm)",
+            "target",
+            "sepal_area",
+            "petal_area"
+          ],
+          "missing_values": 0
+        }
+      ],
+      "finalized": true,
+      "status": "completed",
+      "dataset_url": "https://app.clear.ml/datasets/simple/afe5583bc96e401cbf4b48447e2a75f9/experiments/23306db43cc441fd8eb27f66502bf1a1"
+    }
+  ]
+}

@@ -47,9 +47,11 @@ git config merge.dvc.driver "dvc git-hook merge-driver --ancestor %O --our %A --
 
 Порядок выполненного сценария: base → tag data-v1 → feature/wine → возврат main и dvc checkout → feature/iris-features → merge feature/wine → проверка → main → чистый clone и dvc pull. Хэши каждого этапа сохранены в отчёте.
 
-## Завершение ClearML
+## ClearML
 
-Адрес сервера в исходном задании не указан. Узнайте у преподавателя учебный server; если допускается личный аккаунт, можно использовать [ClearML Hosted Service](https://app.clear.ml/). В UI откройте Settings → Workspace → Create new credentials. В активированном окружении выполните:
+В аккаунте ClearML Hosted Service созданы и проверены версии `1.0.0`, `1.1.0`, `2.0.0` проекта `MIIT/MLOps/practice_3/Gubeev`, Dataset `sklearn-tabular-Gubeev`. Точные ID, ссылки на страницы, статусы, состав и хэши скачанных файлов находятся в `REPORT.md` и `evidence/clearml.json`.
+
+На этом компьютере SDK уже настроен. На новом компьютере получите собственные credentials в Settings → Workspace → Create new credentials и выполните в активированном окружении:
 
 ```powershell
 clearml-init
@@ -57,26 +59,26 @@ clearml-init
 
 Вставляйте предложенную сервером конфигурацию только в интерактивную настройку. Пользовательский `clearml.conf` должен находиться вне Git. В чат и ноутбук ключи копировать не нужно.
 
-Скрипт без флага `--execute` показывает план. Для создания замените `<API URL>` настоящим API-адресом из настройки (он может отличаться от Web UI):
+Скрипт без флага `--execute` показывает план. Команда создания или продолжения прерванного запуска:
 
 ```powershell
 python clearml_versions.py
-python clearml_versions.py --execute --expected-api-host <API URL>
+python clearml_versions.py --execute --expected-api-host https://api.clear.ml
 ```
 
-Создаются `MIIT/MLOps/practice_3/Gubeev` / `sklearn-tabular-Gubeev`, версии `1.0.0`, `1.1.0`, `2.0.0`. Дочерние версии обе наследуют базу; неизменённый Iris повторно не добавляется в Wine. Скрипт не удаляет серверные Dataset.
+Обе дочерние версии наследуют базу; неизменённый Iris повторно не добавляется в Wine. Скрипт не удаляет серверные Dataset. Если ID уже сохранены, используются существующие объекты, новые версии повторно не создаются.
 
-Каждый ID сразу сохраняется в игнорируемый `clearml_ids.local.json`. При частичном сбое повторите ту же команду: существующие объекты используются снова. Не удаляйте этот файл до завершения проверки. После успешного скачивания скрипт создаёт `evidence/clearml.json` и обновляет `REPORT.md` реальными ID, lineage, хэшами и составом.
+При создании каждый ID сразу сохраняется в игнорируемый `clearml_ids.local.json`, чтобы продолжить работу после частичного сбоя. После успешного скачивания ID и результаты сохраняются в `evidence/clearml.json`, откуда скрипт тоже умеет читать ID. Поэтому после завершения проверки локальный файл IDs можно удалить. `REPORT.md` автоматически обновляется реальными результатами.
 
 Повторная проверка уже созданных объектов:
 
 ```powershell
-python clearml_versions.py --execute --inspect-only --expected-api-host <API URL>
+python clearml_versions.py --execute --inspect-only --fresh-cache --expected-api-host https://api.clear.ml
 git add evidence/clearml.json REPORT.md
 git commit -m "Record verified ClearML dataset versions"
 ```
 
-Скачанные копии находятся в игнорируемой `clearml_downloads/`, исходные временные таблицы — в `clearml_sources/`. Для независимого восстановления можно перенести JSON с тремя ID на другую машину и выполнить `--inspect-only` с теми же зависимостями и настроенным SDK.
+Временные исходные CSV, скачанные копии и SDK cache помещаются в игнорируемую `.dvc/tmp/clearml/`. Флаг `--fresh-cache` создаёт новый пустой cache, чтобы проверить доступность файлов в storage. После проверки временные данные удалены, результаты сохранены в `evidence/clearml.json`. Для независимого восстановления на другой машине нужны репозиторий с этим JSON, те же зависимости и настроенный SDK с доступом к Dataset.
 
 ## Сдача
 
@@ -84,7 +86,7 @@ git commit -m "Record verified ClearML dataset versions"
 
 Проверочный clone, временные файлы установки, демонстрационные папки и дублирующие архивы удалены после проверки. В рабочей папке оставлены исходные материалы, этот репозиторий, окружение `../.venv` и хранилище `../dvc_remote_Gubeev`.
 
-При необходимости создайте архив для сдачи и резервную копию Git history. Для полной сдачи сначала завершите серверную часть ClearML:
+При необходимости создайте архив для сдачи и резервную копию Git history:
 
 ```powershell
 git archive --format=zip --prefix=mlops-data-Gubeev/ --output=../mlops-data-Gubeev-submission.zip HEAD

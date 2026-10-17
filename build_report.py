@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 def table(rows: list[dict]) -> str:
@@ -21,7 +23,7 @@ def build_report(root: Path) -> None:
     clearml = json.loads(clearml_path.read_text(encoding="utf-8")) if clearml_path.exists() else None
     complete = clearml is not None and len(clearml["versions"]) == 3
     lines = ["# Практическая работа №3. Версионирование данных с DVC и ClearML",
-             "Автор: Gubeev. Дата локального выполнения: 14.10.2026.",
+             "Автор: Gubeev. Локальная часть DVC выполнена 14.10.2026.",
              "## Статус выполнения",
              "DVC выполнен и проверен. " + ("Три версии ClearML созданы, скачаны и проверены по ID." if complete else
              "ClearML пока не выполнен: учебный сервер и аккаунт не предоставлены, SDK не настроен. Скрипт подготовлен; Dataset IDs и наблюдения сервера не подменяются ожидаемыми результатами. Работа до завершения этой части не готова к полной сдаче."),
@@ -58,12 +60,23 @@ def build_report(root: Path) -> None:
         lines.extend([f"Project: `{clearml['project']}`. Dataset name: `{clearml['name']}`.",
                       *[f"- `{key}`: `{value}`" for key, value in clearml["ids"].items()],
                       "Все три версии финализированы и получены строго по ID; скачаны в разные пустые директории. get_mutable_local_copy может использовать SDK cache; скачивание на второй физической машине отдельно не проверялось."])
+        if clearml.get("verified_at_utc"):
+            verified = datetime.fromisoformat(clearml["verified_at_utc"]).astimezone(ZoneInfo("Europe/Moscow"))
+            lines.append(f"Проверка ClearML выполнена {verified:%d.%m.%Y %H:%M} (Москва).")
+        if clearml.get("fresh_cache"):
+            lines.append("Повторная проверка выполнена после создания всех трёх версий, с новым пустым SDK cache (--inspect-only --fresh-cache). Все файлы получены из ClearML storage без использования прежнего cache. Вторая физическая машина для этой проверки не требовалась и не использовалась.")
+        graph = {}
+        for version in clearml["versions"]:
+            graph.update(version["graph"])
+        lines.append("Общий измеренный dependency graph (ID версии → IDs родителей):\n```json\n" + json.dumps(graph, indent=2) + "\n```")
         for version in clearml["versions"]:
             lines.extend([f"### Version {version['version']}",
-                          f"ID: `{version['id']}`. Parents: `{version['parents']}`. Полный список: `{version['files']}`.",
+                          f"ID: `{version['id']}`. Статус: `{version.get('status', 'finalized')}`. Parents: `{version['parents']}`. Полный список: `{version['files']}`.",
                           f"Added: `{version['changes']['added']}`; modified: `{version['changes']['modified']}`; removed: `{version['changes']['removed']}`.",
                           "Dependency graph:\n```json\n" + json.dumps(version["graph"], indent=2) + "\n```",
                           table(version["tables"])])
+            if version.get("dataset_url"):
+                lines.append(f"[Открыть version {version['version']} в ClearML]({version['dataset_url']}).")
         lines.append("База после создания обеих дочерних версий по-прежнему содержит только iris.csv. WINE_ID отсутствует среди предков IRIS_FEATURES_ID. Хэши скачанных файлов совпадают с независимой локальной генерацией.")
     else:
         lines.extend(["`BASE_ID`, `WINE_ID`, `IRIS_FEATURES_ID`: **ещё не получены**. Реальные dependency graph, статус Completed, состав и SHA-256 скачанных версий будут автоматически добавлены после успешного запуска `clearml_versions.py`.",
@@ -73,17 +86,17 @@ def build_report(root: Path) -> None:
     cm_note = "Наблюдения подтверждены evidence/clearml.json" if complete else "ClearML ниже описан по подготовленному коду и SDK; наблюдения сервера пока отсутствуют"
     lines.extend(["## Сравнение", cm_note + ".",
                   "| Свойство | DVC: наблюдение в работе | ClearML Dataset |\n|---|---|---|",
-                  "| Идентификатор версии | В таблице записаны Git commit + directory MD5 и SHA-256 метафайла | Точные BASE_ID/WINE_ID/IRIS_FEATURES_ID; номер версии задаётся отдельно |",
-                  "| Метаданные | data.dvc и .dvc/config находятся в Git | Dataset на сервере, SDK получает его по ID |",
-                  "| Файлы | CSV в workspace, cache и соседнем remote; Git их не содержит | upload отправляет новые/изменённые файлы в configured storage; дочерняя версия наследует Iris |",
-                  "| Дочерняя версия | От базы созданы два Git-коммита в двух ветках | Dataset.create с явным parent_datasets=[BASE_ID] |",
-                  "| Переключение | После switch main и checkout Wine исчез, Iris восстановился | Dataset.get(dataset_id=...) и отдельная локальная копия каждой версии |",
-                  "| Чистая машина | Clone без data/cache восстановлен через dvc pull из remote | Нужны SDK, credentials, доступ к server/storage; get по ID и download |",
-                  "| Ветвление | feature/wine и feature/iris-features имеют общую базу | 1.1.0 и 2.0.0 явно наследуют одну базу |",
-                  "| Слияние | Merge driver объединил изменение Iris и добавление Wine; проверены оба SHA-256 | Слияние в этой части задания не выполняется; SDK допускает несколько parents |",
-                  "| Связь с Git | Версии data.dvc зафиксированы отдельными коммитами и data-v1 | Git хранит код и ID в отчёте; Dataset ID существует независимо от Git |",
+                  "| Идентификатор версии | В таблице записаны Git commit + directory MD5 и SHA-256 метафайла | Для 1.0.0, 1.1.0 и 2.0.0 записаны разные BASE_ID/WINE_ID/IRIS_FEATURES_ID |",
+                  "| Метаданные | data.dvc и .dvc/config находятся в Git | Dataset.get по ID возвращает version, список файлов и граф родителей |",
+                  "| Файлы | CSV в workspace, cache и соседнем remote; Git их не содержит | upload передавал по одному файлу; Wine наследует Iris от базы, что подтверждено составом и SHA-256 |",
+                  "| Дочерняя версия | От базы созданы два Git-коммита в двух ветках | Обе версии созданы с parent_datasets=[BASE_ID]; parents проверены через SDK |",
+                  "| Переключение | После switch main и checkout Wine исчез, Iris восстановился | Последовательное скачивание по трём ID дало три разных ожидаемых состава |",
+                  "| Чистая машина | Clone без data/cache восстановлен через dvc pull из remote | Повторная проверка с новым пустым SDK cache; вторая физическая машина не использовалась |",
+                  "| Ветвление | feature/wine и feature/iris-features имеют общую базу | graph[WINE_ID] и graph[IRIS_FEATURES_ID] равны [BASE_ID]; WINE_ID не предок 2.0.0 |",
+                  "| Слияние | Merge driver объединил изменение Iris и добавление Wine; проверены оба SHA-256 | Слияние не выполнялось: обе дочерние версии скачаны и проверены независимо |",
+                  "| Связь с Git | Версии data.dvc зафиксированы отдельными коммитами и data-v1 | Серверные ID перенесены в evidence/clearml.json и отчёт, которые сохраняются в Git |",
                   "| UI | В работе использованы CLI, git log и data.dvc | Проверка Web UI пока не выполнена; SDK проверяет финализацию и lineage |" if not complete else
-                  "| UI | В работе использованы CLI, git log и data.dvc | Метаданные доступны серверу; SDK проверил финализацию, Web UI отдельно не проверялся |",
+                  "| UI | В работе использованы CLI, git log и data.dvc | SDK вывел ссылки на страницы всех трёх Dataset; ссылки сохранены в отчёте, Web UI отдельно не проверялся |",
                   "## Ответы на вопросы",
                   "1. **Что определяет версию DVC?** Содержимое отслеживаемой директории задаётся content hash `.dir` в data.dvc, который ссылается на манифест с хэшами файлов. Git commit фиксирует конкретную редакцию этого метафайла и кода. SHA-256 метафайла полезен для проверки байтов; сам по себе он не является хэшем содержимого всех CSV. Разные коммиты могут ссылаться на одни данные.",
                   "2. **Почему коммита мало?** Git содержит указатель на объекты, но не CSV. Если cache утрачен и remote отсутствует, указанные объекты скачать неоткуда. В работе clone получил файлы именно из отдельного remote.",
@@ -91,11 +104,19 @@ def build_report(root: Path) -> None:
                   "4. **Почему finalize не создаёт следующую версию?** finalize закрывает текущий Dataset для изменения. Следующая версия создаётся отдельным Dataset.create с новым ID и явными родителями.",
                   "5. **Как доказать происхождение 2.0.0?** В измеренном get_dependency_graph проверяют graph[IRIS_FEATURES_ID] == [BASE_ID], а WINE_ID отсутствует среди предков. Дополнительно состав 2.0.0 не содержит Wine. Один только состав файлов не доказывает lineage. Сейчас эта проверка реализована в скрипте" + (" и выполнена." if complete else ", но до подключения к серверу не выполнена."),
                   "6. **Switch без DVC checkout.** Git изменит data.dvc, но CSV могут остаться от прежней ветки. Код будет читать состояние, не соответствующее Git; dvc status покажет расхождение. В работе workspace приводился к версии main явно через checkout.",
-                  "7. **Где удобнее каждый инструмент?** DVC удобен для двух Git-веток и слияния независимых изменений Iris/Wine: история данных идёт вместе с кодом. ClearML Dataset удобен для выдачи финализированных версий по ID и просмотра родительского графа в общем сервере, без переключения Git. Сравнение удобства ClearML пока основано на подготовленном сценарии" + (" и проверке SDK." if complete else ", а не на выполненной серверной части."),
+                  "7. **Где удобнее каждый инструмент?** DVC удобен для двух Git-веток и слияния независимых изменений Iris/Wine: история данных идёт вместе с кодом. ClearML Dataset удобен для выдачи финализированных версий по ID и просмотра родительского графа в общем сервере, без переключения Git. " + ("В работе это подтверждено независимым скачиванием трёх версий по ID и проверкой parents через SDK." if complete else "Сравнение ClearML пока основано на подготовленном сценарии, а не на выполненной серверной части."),
                   "## Источники",
                   "- [DVC merge driver](https://dvc.org/doc/user-guide/how-to/resolve-merge-conflicts)",
                   "- [ClearML Dataset SDK](https://clear.ml/docs/latest/docs/references/sdk/dataset/)",
                   "Исходное задание: data_versioning_practice.md; справочник: explained.md. Демонстрационный notebook выполнялся отдельно и не использован вместо самостоятельного решения. При запуске URL локального remote заменялся относительным путём для кириллицы в Windows; исходный файл сохранён без изменений. Локальные ячейки демонстрации и practice_3_solution.ipynb выполнены без ошибок. ClearML-ячейки демонстрации пропущены (run_clearml=False). Выполненная копия демонстрации и временные папки удалены после проверки; выполненный notebook самостоятельного решения сохранён."])
+    if not complete:
+        comparison_start = lines.index("## Сравнение")
+        comparison_end = lines.index("## Ответы на вопросы")
+        for index in range(comparison_start, comparison_end):
+            if lines[index].startswith("| ") and not lines[index].startswith("| Свойство"):
+                columns = lines[index].split("|")
+                columns[-2] = " Серверная часть пока не выполнена; наблюдения отсутствуют "
+                lines[index] = "|".join(columns)
     paragraphs = []
     for line in lines:
         if paragraphs and line.startswith("|") and paragraphs[-1].splitlines()[-1].startswith("|"):

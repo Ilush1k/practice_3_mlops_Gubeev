@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -19,6 +20,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--execute", action="store_true", help="Создать реальные Dataset на сервере")
     parser.add_argument("--inspect-only", action="store_true", help="Повторно скачать уже сохранённые ID")
+    parser.add_argument("--fresh-cache", action="store_true", help="Скачать с новым пустым SDK cache")
     parser.add_argument("--expected-api-host", help="Адрес API, который должен совпасть с настройкой SDK")
     args = parser.parse_args()
     if not args.execute:
@@ -28,20 +30,39 @@ def main() -> None:
     if not args.expected_api_host:
         parser.error("Укажите --expected-api-host для проверки подключения к нужному серверу")
 
-    from clearml import Dataset
+    root = Path(__file__).resolve().parent
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    work_root = root / ".dvc" / "tmp" / "clearml"
+    cache_dir = work_root / "cache" / (run_id if args.fresh_cache else "default")
+    if args.fresh_cache:
+        if cache_dir.exists():
+            raise RuntimeError("Новый cache уже существует")
+        os.environ["CLEARML_CACHE_DIR"] = str(cache_dir)
+    else:
+        os.environ.setdefault("CLEARML_CACHE_DIR", str(cache_dir))
+
+    from clearml import Dataset, Task
     from clearml.backend_api.session import Session
+    from clearml.config import get_cache_dir
+
+    # SDK использует pathlib2.Path; сравниваем пути, а не объекты разных библиотек.
+    if args.fresh_cache and os.path.normcase(os.path.abspath(str(get_cache_dir()))) != os.path.normcase(str(cache_dir.resolve())):
+        raise RuntimeError("SDK использует другой cache вместо нового пустого каталога")
 
     session = Session()
     actual_host = session.get_api_server_host().rstrip("/")
     if actual_host != args.expected_api_host.rstrip("/"):
         raise RuntimeError("Адрес API в настройке SDK не совпадает с --expected-api-host")
-    root = Path(__file__).resolve().parent
     ids_path = root / "clearml_ids.local.json"
-    ids = json.loads(ids_path.read_text(encoding="utf-8")) if ids_path.exists() else {}
     evidence_path = root / "evidence" / "clearml.json"
+    if ids_path.exists():
+        ids = json.loads(ids_path.read_text(encoding="utf-8"))
+    elif evidence_path.exists():
+        ids = json.loads(evidence_path.read_text(encoding="utf-8")).get("ids", {})
+    else:
+        ids = {}
     evidence_path.parent.mkdir(exist_ok=True)
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    sources = root / "clearml_sources" / run_id
+    sources = work_root / "sources" / run_id
     versions = []
     for key, version, mode in SPECS:
         parents = [] if key == "BASE_ID" else [ids["BASE_ID"]]
@@ -74,7 +95,13 @@ def main() -> None:
             if not dataset.finalize():
                 raise RuntimeError(f"Не удалось финализировать {key}")
         downloaded = Dataset.get(dataset_id=ids[key], only_completed=True)
-        target = root / "clearml_downloads" / run_id / version
+        task = Task.get_task(task_id=downloaded.id)
+        status = task.get_status()
+        if status != "completed":
+            raise RuntimeError(f"{version}: ожидался статус completed, получен {status}")
+        dataset_url = task.get_output_log_web_page().replace(
+            "/projects/", "/datasets/simple/", 1).removesuffix("/output/log")
+        target = work_root / "downloads" / run_id / version
         downloaded.get_mutable_local_copy(target_folder=str(target), overwrite=False)
         summary = check_data(target, mode)
         expected = sources / f"expected_{mode}"
@@ -100,8 +127,11 @@ def main() -> None:
             raise RuntimeError(f"{version}: список SDK отличается от скачанного состава")
         versions.append({"key": key, "id": downloaded.id, "version": downloaded.version,
                          "parents": parents, "graph": graph, "files": sorted(downloaded.list_files()),
-                         "changes": changes, "tables": summary, "finalized": downloaded.is_final()})
+                         "changes": changes, "tables": summary, "finalized": downloaded.is_final(),
+                         "status": status, "dataset_url": dataset_url})
         evidence_path.write_text(json.dumps({"project": PROJECT, "name": NAME, "ids": ids,
+                                             "verified_at_utc": datetime.now(timezone.utc).isoformat(),
+                                             "fresh_cache": args.fresh_cache,
                                              "versions": versions}, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"Проверена версия {version}: {downloaded.id}")
     # Повторная проверка базы после создания обеих дочерних версий.
