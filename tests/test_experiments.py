@@ -4,13 +4,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import mlflow
 from mlflow import MlflowClient
 
-from run_experiments import METRICS, ROOT, load_wine
+from run_experiments import METRICS, ROOT, inspect_runs, load_wine
 
 
 class TestDatasetIntegrity(unittest.TestCase):
@@ -23,6 +24,19 @@ class TestDatasetIntegrity(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "SHA-256 Wine не совпадает"):
                     load_wine("test-dataset", "0" * 64)
                 read_csv.assert_not_called()
+
+    def test_incomplete_logging_is_rejected(self):
+        client = Mock()
+        client.get_run.return_value = SimpleNamespace(
+            info=SimpleNamespace(status="FINISHED"),
+            data=SimpleNamespace(
+                params={"model_type": "LogisticRegression", "random_state": "42", "C": "1", "solver": "lbfgs", "max_iter": "1000"},
+                metrics={"accuracy": 0.9, "precision_weighted": 0.9, "recall_weighted": 0.9, "training_seconds": 0.1},
+                tags={"model_family": "logistic_regression"},
+            ),
+        )
+        with self.assertRaisesRegex(RuntimeError, "неполный набор метрик"):
+            inspect_runs(client, [f"run-{i}" for i in range(6)], "dataset", "hash", "split")
 
 
 class TestLoggedRuns(unittest.TestCase):

@@ -322,7 +322,8 @@ def run(args: argparse.Namespace) -> dict:
             duration = perf_counter() - started
             metrics = classification_metrics(data["y_val"], model.predict(data["X_val"]))
             mlflow.log_metrics({**metrics, "training_seconds": duration})
-            mlflow.sklearn.log_model(sk_model=model, name="model",
+            mlflow.sklearn.log_model(sk_model=model, name="model", serialization_format="skops",
+                skops_trusted_types=["sklearn.tree._tree.Tree"] if config["family"] == "random_forest" else [],
                 signature=infer_signature(data["X_train"], model.predict(data["X_train"])),
                 input_example=data["X_train"].iloc[:5])
             mlflow.log_artifact(str(output / "split.json"), artifact_path="data")
