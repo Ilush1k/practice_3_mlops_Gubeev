@@ -1,6 +1,6 @@
 # MLOps, практика 3 — Gubeev
 
-Самостоятельный сценарий с Iris/Wine. Фактические результаты и оставшиеся шаги — в `REPORT.md`; проверяемые записи — в `evidence/`.
+Версионирование Iris и Wine с помощью DVC и ClearML Dataset. Итоговый отчёт опубликован в [основной ветке](https://github.com/Ilush1k/practice_3_mlops_Gubeev/blob/main/REPORT.md).
 
 ## Окружение
 
@@ -53,7 +53,7 @@ git config merge.dvc.driver "dvc git-hook merge-driver --ancestor %O --our %A --
 clearml-init
 ```
 
-Вставляйте предложенную сервером конфигурацию только в интерактивную настройку. Пользовательский `clearml.conf` должен находиться вне Git. В чат и ноутбук ключи копировать не нужно.
+Вставляйте предложенную сервером конфигурацию только в интерактивную настройку. Пользовательский `clearml.conf` должен находиться вне Git. Ключи доступа не должны попадать в код, ноутбуки и Git.
 
 Скрипт без флага `--execute` показывает план. Для создания замените `<API URL>` настоящим API-адресом из настройки (он может отличаться от Web UI):
 
@@ -76,13 +76,6 @@ git commit -m "Record verified ClearML dataset versions"
 
 Скачанные копии находятся в игнорируемой `clearml_downloads/`, исходные временные таблицы — в `clearml_sources/`. Для независимого восстановления можно перенести JSON с тремя ID на другую машину и выполнить `--inspect-only` с теми же зависимостями и настроенным SDK.
 
-## Сдача
+## Файлы проекта
 
-Сдавайте отслеживаемые Git файлы, включая `.dvc/config`, `.dvcignore`, `data.dvc`, скрипты, `pyproject.toml`, `poetry.lock`, `REPORT.md`. Данные, cache, remote, credentials, окружение и скачанные копии не включаются. Git history сохранена в репозитории и отдельном bundle рядом с ним. После настройки Git-хостинга добавьте его URL в отчёт и отправьте `main`, обе feature-ветки и tags.
-
-Архив рядом с проектом содержит локальный результат **до выполнения ClearML**. После завершения серверной части пересоберите его:
-
-```powershell
-git archive --format=zip --prefix=mlops-data-Gubeev/ --output=../mlops-data-Gubeev-submission.zip HEAD
-git bundle create ../mlops-data-Gubeev.bundle --all
-```
+В Git хранятся DVC-метаданные, скрипты, `pyproject.toml` и `poetry.lock`. Данные, кэш, локальное хранилище, окружение и настройки доступа исключены из Git.
