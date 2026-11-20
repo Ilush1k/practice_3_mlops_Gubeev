@@ -16,3 +16,11 @@ venv/
 /clearml.conf
 .env
 *.log
+
+# Локальное хранилище MLflow
+/mlflow.db*
+/mlruns/
+/mlartifacts/
+
+# Результаты экспериментов
+/artifacts/

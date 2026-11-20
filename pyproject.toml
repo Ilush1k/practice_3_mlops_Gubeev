@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "mlops-data-gubeev"
 version = "0.1.0"
-description = "Практика 3: версионирование Iris и Wine с DVC и ClearML"
+description = "Практики 3 и 4: версии данных и сравнение моделей Wine"
 authors = ["Gubeev"]
 package-mode = false
 
@@ -16,6 +16,10 @@ scmrepo = "3.3.11"
 dulwich = "0.22.8"
 filelock = "3.32.7"
 pathspec = "0.12.1"
+mlflow = ">=3.0,<4"
+joblib = ">=1.4,<2"
+scipy = "<1.18"
+matplotlib = ">=3.9,<4"
 
 [tool.poetry.group.notebook.dependencies]
 nbclient = "0.10.2"
