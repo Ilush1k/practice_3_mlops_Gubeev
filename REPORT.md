@@ -2,13 +2,9 @@
 
 Автор: Gubeev. Локальная часть DVC выполнена 14.10.2026.
 
-## Статус выполнения
-
-DVC выполнен и проверен. Три версии ClearML созданы, скачаны и проверены по ID.
+В работе подготовлены версии Iris и Wine, проверены ветвление, слияние и восстановление данных через DVC. В ClearML Dataset созданы три версии с проверкой состава, хэшей и связей между версиями.
 
 ## Файлы и запуск
-
-Структура сдаваемого репозитория приведена к образцу [mlops-data-bychkova](https://github.com/mariyabychkova/mlops-data-bychkova). Идентификаторы, коммиты и хэши принадлежат выполненной работе Gubeev.
 
 | Скрипт | Назначение |
 |---|---|
@@ -20,7 +16,7 @@ DVC выполнен и проверен. Три версии ClearML созда
 | `download_clearml_versions.py` | Скачивание трёх версий строго по ID |
 | `verify_clearml.py` | Проверка локальных файлов и серверных parents, статусов и изменений |
 
-На этом компьютере из папки `mlops-data-Gubeev` активируйте подготовленное окружение:
+Проверка данных в подготовленном локальном окружении:
 
 ```powershell
 ..\.venv\Scripts\Activate.ps1
@@ -28,11 +24,11 @@ python check_data.py --version merged
 python verify_clearml.py --fresh-cache --update-report
 ```
 
-Скрипты `clearml_versions.py`, `clearml_wine.py` и `clearml_iris_features.py` без аргументов показывают сведения о версии; с `--execute` получают и проверяют уже созданные Dataset. Повторный запуск не создаёт дубликаты. Функция `create_version` содержит операции создания, добавления только изменённого файла, upload и finalize; IDs существующих версий указаны в коде и отчёте.
+Скрипты `clearml_versions.py`, `clearml_wine.py` и `clearml_iris_features.py` без аргументов выводят сведения о версиях. Флаг `--execute` запускает получение и проверку существующих Dataset. Для создания версии в `create_version` предусмотрены добавление изменённого файла, загрузка и финализация. Идентификаторы существующих версий сохранены в коде и этом отчёте; повторная проверка не создаёт дубликаты.
 
-При необходимости скачать отдельно: `python download_clearml_versions.py`, затем `python verify_clearml.py --update-report`. Временные скачанные копии и SDK cache находятся внутри игнорируемой `.dvc/tmp/clearml/` и не входят в Git. После проверок временные копии удалены.
+Для отдельного скачивания используется `python download_clearml_versions.py`, для проверки — `python verify_clearml.py --update-report`. Копии данных и кэш SDK размещаются в игнорируемой директории `.dvc/tmp/clearml/`.
 
-На другом компьютере установите зависимости через `poetry install`, настройте доступ к ClearML через `clearml-init` вне Git и выполните команды через `poetry run`. Для восстановления итоговых CSV выполните `dvc pull`; нужен доступ к DVC remote. На текущем компьютере remote расположен в соседней папке `../dvc_remote_Gubeev`, а окружение — в `../.venv`. Эти две служебные папки в сдаваемый Git-репозиторий не входят.
+Для запуска на другом компьютере нужны `poetry install`, настройка ClearML командой `clearml-init` и доступ к DVC remote. Команда `poetry run dvc pull` восстанавливает итоговые CSV. В локальной конфигурации remote расположен в соседней папке `../dvc_remote_Gubeev`, окружение — в `../.venv`. Данные хранилища, окружение и конфигурация доступа не включены в Git.
 
 ## Окружение и репозиторий
 
@@ -55,7 +51,7 @@ GitHub-репозиторий: [practice_3_mlops_Gubeev](https://github.com/Ilus
 
 `check_data.py` проверяет точный состав выбранной версии, порядок столбцов, отсутствие индекса и пропусков, число строк, все исходные значения и target, порядок строк и формулы площадей. Для вещественных значений допускается ошибка 1e-12.
 
-Проверки генератора и валидатора: все три режима повторяют одинаковые байты и сохраняют соседний файл; валидатор отклоняет: неверная площадь; валидатор отклоняет: изменённый target; валидатор отклоняет: потерянная строка; валидатор отклоняет: неверный порядок столбцов; валидатор отклоняет: индекс pandas; валидатор отклоняет: пропущенное значение; валидатор отклоняет отсутствующий файл; git switch без checkout оставлял Wine предыдущей ветки в workspace.
+Для всех трёх режимов проверены повторяемость байтов CSV и сохранность соседнего файла. Валидатор обнаруживает неверную площадь, изменённый target, потерянную строку, неверный порядок столбцов, индекс pandas, пропуски и отсутствие файла. При переключении Git-ветки без `dvc checkout` в рабочей директории оставался Wine из предыдущей версии.
 
 ## Версии DVC
 
@@ -122,9 +118,9 @@ CSV не входят ни в один Git-коммит; cache и локальн
 
 Создан новый clone `C:/Users/Илья/.vscode/CODE/MLOPS/practice_3/mlops-data-Gubeev-clean-clone`. До dvc pull: data отсутствовала, локальный cache отсутствовал. Cache исходного репозитория не копировался и не использовался как shared cache.
 
-После dvc pull SHA-256, формы и столбцы совпали с итоговым состоянием. Дополнительно data-v1 восстановлен из remote в том же clone, затем итоговая main получена снова. Это проверяет доступность базовой и итоговой версий независимо от старого cache. После завершения проверки временный clone удалён при очистке рабочей папки; результаты сохранены в этом отчёте.
+После `dvc pull` контрольные суммы, размеры таблиц и столбцы совпали с итоговой версией. В той же чистой копии восстановлен `data-v1`, затем повторно получена итоговая `main`. Обе версии восстановились из remote без использования кэша исходного репозитория.
 
-Итоговый `dvc status --json`: `{}`. `git status --short`: пустой после сохранения отчёта.
+После проверки `dvc status --json` вернул `{}`, а `git status --short` не показал изменений.
 
 | Файл | SHA-256 | Форма | Пропуски |
 |---|---|---|---|
@@ -149,7 +145,8 @@ Project: `MIIT/MLOps/practice_3/Gubeev`. Dataset name: `sklearn-tabular-Gubeev`.
 
 Скачивание выполнено с новым пустым SDK cache; файлы получены из ClearML storage. Вторая физическая машина не использовалась.
 
-Общий измеренный dependency graph (ID версии → IDs родителей):
+Граф зависимостей: идентификатор версии → идентификаторы родителей.
+
 ```json
 {
   "77ab3b41f30a48a7b4da01a60e705aba": [],
@@ -162,13 +159,14 @@ Project: `MIIT/MLOps/practice_3/Gubeev`. Dataset name: `sklearn-tabular-Gubeev`.
 }
 ```
 
-### Version 1.0.0
+### Версия 1.0.0
 
 ID: `77ab3b41f30a48a7b4da01a60e705aba`. Статус: `completed`. Parents: `[]`. Полный список: `['iris.csv']`.
 
 Added: `['iris.csv']`; modified: `[]`; removed: `[]`.
 
-Dependency graph:
+Граф зависимостей:
+
 ```json
 {
   "77ab3b41f30a48a7b4da01a60e705aba": []
@@ -181,15 +179,16 @@ Dependency graph:
 
 Столбцы `1.0.0/iris.csv`: `sepal length (cm)`, `sepal width (cm)`, `petal length (cm)`, `petal width (cm)`, `target`.
 
-[Открыть version 1.0.0 в ClearML](https://app.clear.ml/datasets/simple/afe5583bc96e401cbf4b48447e2a75f9/experiments/77ab3b41f30a48a7b4da01a60e705aba).
+[Открыть версию 1.0.0 в ClearML](https://app.clear.ml/datasets/simple/afe5583bc96e401cbf4b48447e2a75f9/experiments/77ab3b41f30a48a7b4da01a60e705aba).
 
-### Version 1.1.0
+### Версия 1.1.0
 
 ID: `fd4384d1b03242269ec15a584a543499`. Статус: `completed`. Parents: `['77ab3b41f30a48a7b4da01a60e705aba']`. Полный список: `['iris.csv', 'wine.csv']`.
 
 Added: `['wine.csv']`; modified: `[]`; removed: `[]`.
 
-Dependency graph:
+Граф зависимостей:
+
 ```json
 {
   "77ab3b41f30a48a7b4da01a60e705aba": [],
@@ -208,15 +207,16 @@ Dependency graph:
 
 Столбцы `1.1.0/wine.csv`: `alcohol`, `malic_acid`, `ash`, `alcalinity_of_ash`, `magnesium`, `total_phenols`, `flavanoids`, `nonflavanoid_phenols`, `proanthocyanins`, `color_intensity`, `hue`, `od280/od315_of_diluted_wines`, `proline`, `target`.
 
-[Открыть version 1.1.0 в ClearML](https://app.clear.ml/datasets/simple/afe5583bc96e401cbf4b48447e2a75f9/experiments/fd4384d1b03242269ec15a584a543499).
+[Открыть версию 1.1.0 в ClearML](https://app.clear.ml/datasets/simple/afe5583bc96e401cbf4b48447e2a75f9/experiments/fd4384d1b03242269ec15a584a543499).
 
-### Version 2.0.0
+### Версия 2.0.0
 
 ID: `23306db43cc441fd8eb27f66502bf1a1`. Статус: `completed`. Parents: `['77ab3b41f30a48a7b4da01a60e705aba']`. Полный список: `['iris.csv']`.
 
 Added: `[]`; modified: `['iris.csv']`; removed: `[]`.
 
-Dependency graph:
+Граф зависимостей:
+
 ```json
 {
   "23306db43cc441fd8eb27f66502bf1a1": [
@@ -231,13 +231,11 @@ Dependency graph:
 
 Столбцы `2.0.0/iris.csv`: `sepal length (cm)`, `sepal width (cm)`, `petal length (cm)`, `petal width (cm)`, `target`, `sepal_area`, `petal_area`.
 
-[Открыть version 2.0.0 в ClearML](https://app.clear.ml/datasets/simple/afe5583bc96e401cbf4b48447e2a75f9/experiments/23306db43cc441fd8eb27f66502bf1a1).
+[Открыть версию 2.0.0 в ClearML](https://app.clear.ml/datasets/simple/afe5583bc96e401cbf4b48447e2a75f9/experiments/23306db43cc441fd8eb27f66502bf1a1).
 
 База после создания обеих дочерних версий содержит только исходный iris.csv. WINE_ID отсутствует среди предков IRIS_FEATURES_ID. SHA-256 скачанных файлов совпадают с соответствующими версиями DVC.
 
 ## Сравнение
-
-Ниже приведены результаты фактических проверок DVC и ClearML.
 
 | Свойство | DVC: наблюдение в работе | ClearML Dataset |
 |---|---|---|
@@ -262,7 +260,7 @@ Dependency graph:
 
 4. **Почему finalize не создаёт следующую версию?** finalize закрывает текущий Dataset для изменения. Следующая версия создаётся отдельным Dataset.create с новым ID и явными родителями.
 
-5. **Как доказать происхождение 2.0.0?** В измеренном get_dependency_graph проверяют graph[IRIS_FEATURES_ID] == [BASE_ID], а WINE_ID отсутствует среди предков. Дополнительно состав 2.0.0 не содержит Wine. Один только состав файлов не доказывает lineage. Сейчас эта проверка реализована в скрипте и выполнена.
+5. **Как доказать происхождение 2.0.0?** В измеренном get_dependency_graph проверяют graph[IRIS_FEATURES_ID] == [BASE_ID], а WINE_ID отсутствует среди предков. Дополнительно состав 2.0.0 не содержит Wine. Один только состав файлов не доказывает lineage. Результат проверки сохранён в отчёте.
 
 6. **Switch без DVC checkout.** Git изменит data.dvc, но CSV могут остаться от прежней ветки. Код будет читать состояние, не соответствующее Git; dvc status покажет расхождение. В работе workspace приводился к версии main явно через checkout.
 
@@ -274,4 +272,4 @@ Dependency graph:
 
 - [ClearML Dataset SDK](https://clear.ml/docs/latest/docs/references/sdk/dataset/)
 
-Исходное задание: data_versioning_practice.md; справочник: explained.md. Демонстрационный notebook выполнялся отдельно и не использован вместо самостоятельного решения. При запуске URL локального remote заменялся относительным путём для кириллицы в Windows; исходный файл сохранён без изменений. Локальные ячейки демонстрации и дополнительный notebook самостоятельной работы выполнялись без ошибок. ClearML-ячейки демонстрации пропущены (run_clearml=False); самостоятельные три версии ClearML созданы и проверены отдельными скриптами. Дополнительные notebooks и временные папки удалены после проверки. Все результаты для сдачи собраны в этом отчёте.
+Учебные материалы: `data_versioning_practice.md` и `explained.md`.
