@@ -67,7 +67,7 @@ class TestLoggedRuns(unittest.TestCase):
         for run in self.runs:
             with self.subTest(run_id=run.info.run_id):
                 self.assertTrue(set(METRICS + ("training_seconds",)) <= run.data.metrics.keys())
-                self.assertEqual(run.data.params["random_state"], "42")
+                self.assertEqual(run.data.params["random_state"], str(self.result["split"]["random_state"]))
                 for key in ["dataset_id", "dataset_sha256", "split_sha256", "session_id"]:
                     self.assertEqual(run.data.tags[key], self.result[key])
         split = self.result["split"]["indices"]

@@ -172,7 +172,7 @@ def inspect_runs(client: MlflowClient, run_ids: list[str], dataset_id: str,
 
 
 def export_clearml(verification: dict, model_path: Path, output: Path, verification_path: Path,
-                   project: str, make_public: bool) -> dict:
+                   project: str) -> dict:
     from clearml import Model as ClearMLModel, OutputModel, Task
 
     task = Task.init(
@@ -208,18 +208,11 @@ def export_clearml(verification: dict, model_path: Path, output: Path, verificat
         remote_model = ClearMLModel(model_id=model.id)
         if not remote_model.published:
             raise RuntimeError("ClearML OutputModel не опубликован")
-        shared_ids = []
-        if make_public:
-            from clearml.backend_api.session.client import APIClient
-            api = APIClient()
-            source = Dataset.get(dataset_id=verification["dataset_id"], only_completed=True)
-            shared_ids = sorted(source.get_dependency_graph())
-            api.tasks.make_public(ids=[task.id, *shared_ids])
-            api.models.make_public(ids=[model.id])
         result = {
             "task_id": task.id, "model_id": model.id, "published": True,
-            "model_download_sha256_matches": True, "public_requested": make_public,
-            "shared_dataset_ids": shared_ids,
+            "model_download_sha256_matches": True,
+            "task_status": "completed", "artifacts_verified": True,
+            "sharing": "ClearML Hosted: Share > Create link in the web interface",
             "task_url": task.get_output_log_web_page().removesuffix("/output/log"),
             "model_url": task.get_output_log_web_page().split("/experiments/", 1)[0] + f"/models/{model.id}",
         }
@@ -256,7 +249,7 @@ def update_report(verification: dict, comparison: pd.DataFrame) -> None:
     text = path.read_text(encoding="utf-8").split("\n## Эксперименты", 1)[0].rstrip()
     v = verification
     lines = ["", "## Эксперименты", "",
-             "Wine получен из финализированной версии ClearML Dataset. Перед обучением проверен SHA-256 CSV. Все шесть конфигураций используют один стратифицированный split: 106 строк train, 36 validation и 36 test, random_state=42. Индексы строк и состав классов сохранены в split.json.", "",
+             f"Wine получен из финализированной версии ClearML Dataset. Перед обучением проверен SHA-256 CSV. Все шесть конфигураций используют один стратифицированный split: {v['split']['rows']['train']} строк train, {v['split']['rows']['validation']} validation и {v['split']['rows']['test']} test, random_state={v['split']['random_state']}. Индексы строк и состав классов сохранены в split.json.", "",
              f"- Dataset ID: `{v['dataset_id']}`.", f"- SHA-256 Wine: `{v['dataset_sha256']}`.",
              f"- Tracking URI: `{v['tracking_uri']}`.", f"- Experiment: `{v['experiment_name']}`, ID `{v['experiment_id']}`.",
              f"- Серия запусков: `{v['session_id']}`.", f"- SHA-256 split: `{v['split_sha256']}`.", "",
@@ -279,11 +272,11 @@ def update_report(verification: dict, comparison: pd.DataFrame) -> None:
                   f"- Model: [{c['model_id']}]({c['model_url']}), опубликована.",
                   "- В Task загружены параметры победителя, validation/test-метрики, таблица сравнения, verification.json, модель, split, окружение и матрица ошибок.",
                   "- Метаданные модели содержат MLflow run ID, Dataset ID и хэши. Файл модели повторно скачан из ClearML, SHA-256 совпал с локальным.",
-                  f"- Публичный доступ к Task, модели и исходным версиям данных: {'запрошен через API ClearML' if c['public_requested'] else 'не включался'}.", ""]
+                  "- Для проверки из другого workspace в ClearML Hosted нужна ссылка чтения: меню Task → Share → Create link. Публикация OutputModel фиксирует модель, но сама по себе не создаёт такую ссылку.", ""]
     lines += ["### Воспроизведение", "", "```powershell", "poetry install", "clearml-init",
               "poetry run python run_experiments.py `",
               f"  --dataset-id {v['dataset_id']} `", f"  --expected-sha256 {v['dataset_sha256']} `",
-              "  --tracking-uri http://127.0.0.1:8081 --clearml --public --update-report", "```", "",
+              "  --tracking-uri http://127.0.0.1:8081 --clearml --update-report", "```", "",
               "Перед запуском HTTP-варианта нужно поднять MLflow Tracking Server по команде из README. Для работы без сервера можно передать --tracking-uri sqlite:///mlflow.db. Повторное выполнение создаёт новую серию из шести runs в том же experiment.", "",
               "### Дополнительные проверки", "",
               "Автоматические тесты проверяют структуру записанных runs и изоляцию test-метрик. Сохранены confusion_matrix.png и classification_report.json. Tracking Server использует SQLite для метаданных и отдельное файловое хранилище артефактов.", "",
@@ -395,8 +388,13 @@ def run(args: argparse.Namespace) -> dict:
             raise RuntimeError("Test-метрики должны находиться только в выбранном run")
     save_json(args.verification_file, verification)
     if args.clearml:
-        verification["clearml"] = export_clearml(verification, model_path, output,
-            args.verification_file, args.clearml_project, args.public)
+        try:
+            verification["clearml"] = export_clearml(verification, model_path, output,
+                args.verification_file, args.clearml_project)
+        except Exception:
+            verification["status"] = "failed"
+            save_json(args.verification_file, verification)
+            raise
     save_json(args.verification_file, verification)
     save_json(output / "verification.json", verification)
     with mlflow.start_run(run_id=best_run_id):
@@ -424,13 +422,10 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("--verification-file", type=Path, default=ROOT / "verification.json")
     parser.add_argument("--clearml", action="store_true", help="Экспортировать победителя в ClearML")
     parser.add_argument("--clearml-project", default="MIIT/MLOps/practice_4/Gubeev")
-    parser.add_argument("--public", action="store_true", help="Открыть чтение ClearML Task, модели и исходных Dataset для проверки")
     parser.add_argument("--update-report", action="store_true", help="Обновить раздел Эксперименты в REPORT.md")
     args = parser.parse_args(argv)
     if not re.fullmatch(r"[0-9a-fA-F]{64}", args.expected_sha256):
         parser.error("--expected-sha256 должен содержать 64 шестнадцатеричных символа")
-    if args.public and not args.clearml:
-        parser.error("--public используется вместе с --clearml")
     return args
 
 

@@ -49,12 +49,12 @@ poetry run python run_experiments.py `
   --dataset-id fd4384d1b03242269ec15a584a543499 `
   --expected-sha256 b72adfd45219c12d4af882f76b4c67df0a44922d0bac0f2fd30e4b8d0c97a301 `
   --tracking-uri http://127.0.0.1:8081 `
-  --clearml --public --update-report
+  --clearml --update-report
 ```
 
-`--clearml` создаёт Task `MIIT/MLOps/practice_4/Gubeev / wine-best-model` и публикует OutputModel. `--public` открывает чтение Task, модели и исходных Dataset для проверки по ссылкам. `--update-report` обновляет раздел «Эксперименты» в общем отчёте.
+`--clearml` создаёт Task `MIIT/MLOps/practice_4/Gubeev / wine-best-model` и публикует OutputModel. `--update-report` обновляет раздел «Эксперименты» в общем отчёте.
 
-Для выполнения только MLflow-части уберите `--clearml --public`. Работа без Tracking Server доступна с `--tracking-uri sqlite:///mlflow.db`. Адрес также можно передать переменной окружения `MLFLOW_TRACKING_URI`.
+Для выполнения только MLflow-части уберите `--clearml`. Работа без Tracking Server доступна с `--tracking-uri sqlite:///mlflow.db`. Адрес также можно передать переменной окружения `MLFLOW_TRACKING_URI`.
 
 Скрипт получает Wine по ID, проверяет SHA-256, создаёт один стратифицированный split 60/20/20 и обучает три Logistic Regression (`C=0.1, 1, 10`) и три Random Forest. У всех запусков одинаковые метрики и теги происхождения данных. Отдельный `session_id` отделяет текущую шестёрку от предыдущих запусков.
 
@@ -75,5 +75,11 @@ poetry run python -m unittest discover -s tests -v
 ```
 
 Тесты проверяют отклонение файла с неверным хэшем, шесть завершённых runs, разные конфигурации, одинаковую версию данных и split, изоляцию текущей серии и наличие test-метрик только у победителя.
+
+## Доступ для проверки в ClearML
+
+Ссылки на Task, модель и Dataset находятся в REPORT.md. Для просмотра из другого workspace ClearML Hosted откройте страницу Task, выберите меню **Share → Create link** и передайте преподавателю созданную ссылку. Она предоставляет чтение Task и связанных материалов, включая модель. Для исходных версий Dataset аналогично откройте их служебные Task и создайте ссылки чтения.
+
+`OutputModel.publish()` фиксирует модель в состоянии Published. Создание ссылки чтения — отдельная операция в интерфейсе Hosted Service; стандартный SDK не выполняет её в этом проекте.
 
 Демонстрация преподавателя на Breast Cancer находится в `notebooks/experiments_demo.ipynb`. Она выполняется отдельно от самостоятельной работы Wine; результаты демонстрации не участвуют в выборе модели.
