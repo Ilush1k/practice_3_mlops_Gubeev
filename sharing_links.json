@@ -1,0 +1,29 @@
+{
+  "links": [
+    {
+      "name": "Лучшая модель Wine — практика 4",
+      "task_id": "4bd27f0a960347528a048fc8bb9c1b35",
+      "project_id": "66706abda484440e8133babbfd2e204c",
+      "url": "https://app.clear.ml/projects/66706abda484440e8133babbfd2e204c/tasks/4bd27f0a960347528a048fc8bb9c1b35/execution?columns=selected&columns=type&columns=name&columns=tags&columns=status&columns=project.name&columns=users&columns=started&columns=last_update&columns=last_iteration&columns=parent.name&order=-last_update"
+    },
+    {
+      "name": "Iris — базовая версия 1.0.0",
+      "task_id": "77ab3b41f30a48a7b4da01a60e705aba",
+      "project_id": "afe5583bc96e401cbf4b48447e2a75f9",
+      "url": "https://app.clear.ml/projects/afe5583bc96e401cbf4b48447e2a75f9/tasks/77ab3b41f30a48a7b4da01a60e705aba/execution?columns=selected&columns=type&columns=name&columns=tags&columns=status&columns=project.name&columns=users&columns=started&columns=last_update&columns=last_iteration&columns=parent.name&order=-last_update"
+    },
+    {
+      "name": "Iris + Wine — версия 1.1.0",
+      "task_id": "fd4384d1b03242269ec15a584a543499",
+      "project_id": "afe5583bc96e401cbf4b48447e2a75f9",
+      "url": "https://app.clear.ml/projects/afe5583bc96e401cbf4b48447e2a75f9/tasks/fd4384d1b03242269ec15a584a543499/execution?columns=selected&columns=type&columns=name&columns=tags&columns=status&columns=project.name&columns=users&columns=started&columns=last_update&columns=last_iteration&columns=parent.name&order=-last_update"
+    },
+    {
+      "name": "Iris с дополнительными признаками — версия 2.0.0",
+      "task_id": "23306db43cc441fd8eb27f66502bf1a1",
+      "project_id": "afe5583bc96e401cbf4b48447e2a75f9",
+      "url": "https://app.clear.ml/projects/afe5583bc96e401cbf4b48447e2a75f9/tasks/23306db43cc441fd8eb27f66502bf1a1/execution?columns=selected&columns=type&columns=name&columns=tags&columns=status&columns=project.name&columns=users&columns=started&columns=last_update&columns=last_iteration&columns=parent.name&order=-last_update"
+    }
+  ],
+  "access_from_another_workspace_verified": false
+}

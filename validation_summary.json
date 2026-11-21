@@ -1,0 +1,29 @@
+{
+  "tests": {
+    "status": "passed",
+    "count": 6
+  },
+  "pip_check": {
+    "status": "passed"
+  },
+  "poetry_lock": {
+    "status": "passed"
+  },
+  "demo_notebook": {
+    "status": "passed",
+    "executed_code_cells": 9
+  },
+  "reproducibility": {
+    "status": "passed",
+    "checks": {
+      "same_code_sha256": true,
+      "same_experiment": true,
+      "new_six_runs": true,
+      "same_split": true,
+      "same_validation_scores": true,
+      "same_selected_configuration": true,
+      "same_test_metrics": true
+    }
+  },
+  "code_sha256": "67396bdd4dd7f99f3cf836196a2474044f5870256539f4e7a28cca6db91a86ef"
+}

@@ -1,0 +1,38 @@
+{
+  "status": "passed",
+  "original_session_id": "f6ddb08de782434c",
+  "repeated_session_id": "703d99d788874b99",
+  "experiment_id": "1",
+  "original_run_ids": [
+    "0c6acbee35a14bb394c57cab0d2edebc",
+    "2a26a4e89605431ca9fe378620acdd44",
+    "b2c18d715d3b42879c651f6bcdb39590",
+    "09b98b94ff25449fb1bc2d8ffcd6422a",
+    "4c3cff12b29e431d9bc795003e86a96c",
+    "e76bcad75a944b88a450abf04d58d14d"
+  ],
+  "repeated_run_ids": [
+    "704f7377f1644c7ba348ec2e33a8cf36",
+    "8d503790ddce44dc97d8f8052e92f289",
+    "08301dab23314fe2b14b9ec888a94be8",
+    "c8e077d5873a4feeacd2e892ea3a61dd",
+    "87188e76eaad4cf5af10c74e84f42cd0",
+    "db2f99dd29f5479e97581327030d2a6a"
+  ],
+  "checks": {
+    "same_code_sha256": true,
+    "same_experiment": true,
+    "new_six_runs": true,
+    "same_split": true,
+    "same_validation_scores": true,
+    "same_selected_configuration": true,
+    "same_test_metrics": true
+  },
+  "test_metrics": {
+    "accuracy": 0.9444444444444444,
+    "precision_weighted": 0.9444444444444444,
+    "recall_weighted": 0.9444444444444444,
+    "f1_weighted": 0.9444444444444444
+  },
+  "code_sha256": "67396bdd4dd7f99f3cf836196a2474044f5870256539f4e7a28cca6db91a86ef"
+}

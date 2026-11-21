@@ -282,3 +282,107 @@ Added: `[]`; modified: `['iris.csv']`; removed: `[]`.
 - [ClearML Dataset SDK](https://clear.ml/docs/latest/docs/references/sdk/dataset/)
 
 Учебные материалы: `data_versioning_practice.md` и `explained.md`.
+
+## Эксперименты
+
+Wine получен из финализированной версии ClearML Dataset. Перед обучением проверен SHA-256 CSV. Все шесть конфигураций используют один стратифицированный split: 106 строк train, 36 validation и 36 test, random_state=42. Индексы строк и состав классов сохранены в split.json.
+
+- Dataset ID: `fd4384d1b03242269ec15a584a543499`.
+- SHA-256 Wine: `b72adfd45219c12d4af882f76b4c67df0a44922d0bac0f2fd30e4b8d0c97a301`.
+- Tracking URI: `http://127.0.0.1:8081`.
+- Experiment: `miit-mlops-practice-4-Gubeev`, ID `1`.
+- Серия запусков: `f6ddb08de782434c`.
+- SHA-256 split: `98c7de9ab336ea5b15d51090eb0f897ba517ec3a3670692762b03b628d1af745`.
+
+| Компонент | Версия |
+|---|---|
+| Python | 3.12.10 |
+| mlflow | 3.18.0 |
+| clearml | 1.18.0 |
+| scikit-learn | 1.6.1 |
+| pandas | 2.2.3 |
+| numpy | 2.5.4 |
+| scipy | 1.17.1 |
+| joblib | 1.6.0 |
+| matplotlib | 3.11.2 |
+
+### Сравнение конфигураций
+
+| Run | Run ID | Семейство | Параметры | Validation F1 | Время обучения, с |
+|---|---|---|---|---:|---:|
+| rf-depth-6 | `4c3cff12b29e431d9bc795003e86a96c` | random_forest | `n_estimators=100, max_depth=6, random_state=42` | 0.972369 | 0.068131 |
+| rf-depth-unlimited | `e76bcad75a944b88a450abf04d58d14d` | random_forest | `n_estimators=200, max_depth=None, random_state=42` | 0.972369 | 0.143181 |
+| rf-depth-3 | `09b98b94ff25449fb1bc2d8ffcd6422a` | random_forest | `n_estimators=100, max_depth=3, random_state=42` | 0.944833 | 0.102185 |
+| logreg-c-0.1 | `0c6acbee35a14bb394c57cab0d2edebc` | logistic_regression | `C=0.1, solver=lbfgs, max_iter=1000, random_state=42` | 0.943525 | 0.019451 |
+| logreg-c-1 | `2a26a4e89605431ca9fe378620acdd44` | logistic_regression | `C=1.0, solver=lbfgs, max_iter=1000, random_state=42` | 0.943525 | 0.008564 |
+| logreg-c-10 | `b2c18d715d3b42879c651f6bcdb39590` | logistic_regression | `C=10.0, solver=lbfgs, max_iter=1000, random_state=42` | 0.914747 | 0.010551 |
+
+Выбрана конфигурация **rf-depth-6**: максимальный validation F1 0.972369. При равенстве F1 применяется алфавитный порядок имён запусков. Test не использовался при выборе конфигурации.
+
+Лучший MLflow run ID: `4c3cff12b29e431d9bc795003e86a96c`. Модель загружена по `runs:/4c3cff12b29e431d9bc795003e86a96c/model`; её предсказания совпали с исходным Pipeline. Проверены обязательные поля всех шести runs, signature и пять строк input example. Результаты сохранены в verification.json.
+
+### Итоговая оценка
+
+| Метрика test | Значение |
+|---|---:|
+| accuracy | 0.944444 |
+| precision_weighted | 0.944444 |
+| recall_weighted | 0.944444 |
+| f1_weighted | 0.944444 |
+
+Метрики test вычислены один раз после выбора победителя и записаны только в его run с префиксом test_. Матрица ошибок, предсказания и показатели по классам сохранены как MLflow artifacts.
+
+### Результат в ClearML
+
+- Task: [4bd27f0a960347528a048fc8bb9c1b35](https://app.clear.ml/projects/66706abda484440e8133babbfd2e204c/experiments/4bd27f0a960347528a048fc8bb9c1b35), статус `completed`.
+- Model: [80b21625d99d4852a1eef58058751a8d](https://app.clear.ml/projects/66706abda484440e8133babbfd2e204c/models/80b21625d99d4852a1eef58058751a8d), опубликована.
+- В Task загружены параметры победителя, validation/test-метрики, таблица сравнения, verification.json, модель, split, окружение и матрица ошибок.
+- Метаданные модели содержат MLflow run ID, Dataset ID и хэши. Файл модели повторно скачан из ClearML, SHA-256 совпал с локальным.
+
+### Ссылки на Task и версии данных
+
+| Результат | ClearML |
+|---|---|
+| Лучшая модель Wine — практика 4 | [Открыть](https://app.clear.ml/projects/66706abda484440e8133babbfd2e204c/tasks/4bd27f0a960347528a048fc8bb9c1b35/execution?columns=selected&columns=type&columns=name&columns=tags&columns=status&columns=project.name&columns=users&columns=started&columns=last_update&columns=last_iteration&columns=parent.name&order=-last_update) |
+| Iris — базовая версия 1.0.0 | [Открыть](https://app.clear.ml/projects/afe5583bc96e401cbf4b48447e2a75f9/tasks/77ab3b41f30a48a7b4da01a60e705aba/execution?columns=selected&columns=type&columns=name&columns=tags&columns=status&columns=project.name&columns=users&columns=started&columns=last_update&columns=last_iteration&columns=parent.name&order=-last_update) |
+| Iris + Wine — версия 1.1.0 | [Открыть](https://app.clear.ml/projects/afe5583bc96e401cbf4b48447e2a75f9/tasks/fd4384d1b03242269ec15a584a543499/execution?columns=selected&columns=type&columns=name&columns=tags&columns=status&columns=project.name&columns=users&columns=started&columns=last_update&columns=last_iteration&columns=parent.name&order=-last_update) |
+| Iris с дополнительными признаками — версия 2.0.0 | [Открыть](https://app.clear.ml/projects/afe5583bc96e401cbf4b48447e2a75f9/tasks/23306db43cc441fd8eb27f66502bf1a1/execution?columns=selected&columns=type&columns=name&columns=tags&columns=status&columns=project.name&columns=users&columns=started&columns=last_update&columns=last_iteration&columns=parent.name&order=-last_update) |
+
+Ссылки также сохранены в [sharing_links.json](sharing_links.json). Просмотр из другого workspace требует созданной ссылки чтения через Share → Create link и входа в ClearML. Этот порядок описан в [документации ClearML](https://clear.ml/docs/latest/docs/webapp/webapp_exp_sharing/). Доступ из другого workspace отдельно не проверялся.
+
+### Воспроизведение
+
+```powershell
+poetry install
+clearml-init
+poetry run python run_experiments.py `
+  --dataset-id fd4384d1b03242269ec15a584a543499 `
+  --expected-sha256 b72adfd45219c12d4af882f76b4c67df0a44922d0bac0f2fd30e4b8d0c97a301 `
+  --tracking-uri http://127.0.0.1:8081 --clearml --update-report
+```
+
+Перед запуском HTTP-варианта нужно поднять MLflow Tracking Server по команде из README. Для работы без сервера можно передать --tracking-uri sqlite:///mlflow.db. Повторное выполнение создаёт новую серию из шести runs в том же experiment.
+
+### Дополнительные проверки
+
+Автоматические тесты проверяют структуру записанных runs и изоляцию test-метрик. Сохранены confusion_matrix.png и classification_report.json. Tracking Server использует SQLite для метаданных и отдельное файловое хранилище артефактов.
+
+В этой серии время обучения составило от 0.008564 до 0.143181 с. Эти измерения относятся к одному запуску на данном компьютере; небольшую разницу времени нельзя считать устойчивым преимуществом. Качество сравнивалось по validation F1, скорость приведена отдельно.
+
+### Анализ качества и времени
+
+Logistic Regression с C=0.1 и C=1 дала одинаковый validation F1 0.943525. При C=10 он снизился до 0.914747: ослабление регуляризации в этой серии не улучшило качество.
+
+У Random Forest увеличение глубины с 3 до 6 повысило validation F1 с 0.944833 до 0.972369. Вариант с 200 деревьями без ограничения глубины получил тот же F1, что и 100 деревьев с глубиной 6. В этой серии его обучение заняло 0.143181 с против 0.068131 с у выбранной конфигурации. Поэтому усложнение леса здесь не дало выигрыша по validation; разовое измерение времени не является общим сравнением производительности.
+
+На test выбранная модель правильно классифицировала 34 из 36 объектов. Две ошибки приходятся на классы 0 и 1; все 10 объектов класса 2 распознаны верно. Итоговый test F1 0.944444 ниже validation F1 0.972369. Test использован для итоговой оценки, параметры по его результатам не менялись.
+
+### Проверка проекта и повторного запуска
+
+Все 6 автоматических тестов прошли. Проверки `python -m pip check` и `poetry check --lock` завершились без ошибок. Итог проверок сохранён в [validation_summary.json](validation_summary.json).
+
+Повторное выполнение создало ещё шесть runs в experiment ID 1. Совпали SHA-256 кода, split, все validation F1, выбранная конфигурация и test-метрики. Исходная серия: `f6ddb08de782434c`, повторная: `703d99d788874b99`. Результаты проверки — [reproducibility.json](reproducibility.json).
+
+Код выполненной серии: commit `12ba94d0c39f939bd62364727260ffc4c07425ce`, SHA-256 `67396bdd4dd7f99f3cf836196a2474044f5870256539f4e7a28cca6db91a86ef`.
+
+Демонстрационный [experiments_demo.ipynb](notebooks/experiments_demo.ipynb) выполнен отдельно: 9 ячеек с кодом, ошибок нет. Демонстрация использует Breast Cancer; её результаты не включены в сравнение Wine.
